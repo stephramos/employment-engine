@@ -1,0 +1,27 @@
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html>
+  <head>
+    <title>Result</title>
+    <link type="text/css" rel="stylesheet" href="table.css" />
+  </head>
+  <body>
+    <div style="text-align:center;position:center;padding-top: 5px">
+      <h4>Employment statistics for {{occ}} <br> in {{metro}}</h4></div>
+    <p style="bottom-margin:10px">
+    {{^bool}}
+        <br>
+        <p style="text-align: center"> No data found</p>
+    {{/bool}}
+    {{#bool}}
+      <table class="CSS_Table_Example" style="width:80%;margin:auto;padding-top: 0px">
+	<tr><td>Year</td><td>Employment</td><td>Share of National Employment</td><td>Share labor force Area</td><td>Avg annual wage</td><td>Comparison national wage</td><td>Unemp rate Area</td><td>Area wage growth</td><td>National wage growth</td><td>Predicted wage ML*</td></tr>
+        {{#occInfo}}
+	<tr><td><b>{{year}}</b></td><td>{{msa_total_emp}}</td><td>{{pct}}</td><td>{{labor}}</td><td>{{wage}}</td><td>{{dif}}</td><td>{{unemp_rate}}</td><td>{{growth_msa}}</td>
+	  <td>{{growth_n}}</td><td>{{pred_wage}}</td></tr>
+        {{/occInfo}}
+    </table>
+      <br>
+      <p style="width: 85%;padding-left: 9%;font-size: small">*Predicted wage using a Linear Regression Model. Features are: share of national employment, share of labor force, and unemployment rate in metropolitan area.</p>
+    {{/bool}}
+    </p>
+</body></html>

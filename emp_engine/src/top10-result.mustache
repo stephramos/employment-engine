@@ -1,0 +1,18 @@
+<!DOCTYPE html PUBLIC "-//IETF//DTD HTML 2.0//EN">
+<html>
+  <head>
+    <title>Result</title>
+    <link type="text/css" rel="stylesheet" href="table.css" />
+  </head>
+  <body>
+    <div style="text-align:center;position:center;padding-top: 5px">
+      <h4>Occupations with the most job growth in {{year}}</h4></div>
+    <p style="bottom-margin:10px">
+      <table class="CSS_Table_Example" style="width:80%;margin:auto;padding-top: 0px">
+	<tr><td>Occupation</td><td>Employment Growth</td><td>Average wage</td></tr>
+        {{#yearInfo}}
+	<tr><td>{{occ_title}}</td><td>{{growth}}</td><td>{{a_mean}}</td></tr>
+        {{/yearInfo}}
+    </table>
+    </p>
+</body></html>

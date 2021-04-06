@@ -1,0 +1,460 @@
+*****Master dataset******
+beeline -u jdbc:hive2://localhost:10000/default -n hadoop -d org.apache.hive.jdbc.HiveDriver
+
+-- First, map the CSV data we downloaded in Hive
+
+create external table stephanieramos_national_jobs_csv(
+occ_code string,
+occ_title string,
+occ_group string,
+tot_emp int,
+emp_prse decimal,
+h_mean int,
+a_mean int,
+mean_prse decimal,
+h_pct10 decimal,
+h_pct25 decimal,
+h_median decimal,
+h_pct75 decimal,
+h_pct90 decimal,
+a_pct10 int,
+a_pct25 int,
+a_median int,
+a_pct75 int,
+a_pct90 int,
+annual string,
+hourly string,
+year smallint)
+row format serde 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+WITH SERDEPROPERTIES (
+   "separatorChar" = "\,",
+   "quoteChar"     = "\""
+)
+STORED AS TEXTFILE
+  location 's3://stephanieramos-mpcs53014/national_job_data/';
+
+-- Run a test query to make sure the above worked correctly
+SELECT year, occ_code, occ_title, occ_group, tot_emp, a_mean, a_median FROM stephanieramos_national_jobs_csv where occ_code = '00-000' limit 10;
+SELECT year, occ_code, occ_title, occ_group, tot_emp, a_mean, a_median FROM stephanieramos_national_jobs_csv limit 10;
+
+-- Create an ORC table for job data (Note "stored as ORC" at the end)
+create external table stephanieramos_national_jobs(
+occ_code string,
+occ_title string,
+occ_group string,
+tot_emp int,
+emp_prse float,
+h_mean int,
+a_mean int,
+mean_prse float,
+h_pct10 float,
+h_pct25 float,
+h_median float,
+h_pct75 float,
+h_pct90 float,
+a_pct10 int,
+a_pct25 int,
+a_median int,
+a_pct75 int,
+a_pct90 int,
+annual string,
+hourly string,
+year smallint)
+stored as orc;
+
+-- Copy the CSV table to the ORC table
+
+insert overwrite table stephanieramos_national_jobs select * from stephanieramos_national_jobs_csv
+where occ_code is not null and tot_emp is not null;
+
+SELECT occ_code, occ_title, occ_group, tot_emp, a_mean, a_median FROM stephanieramos_national_jobs limit 20;
+
+SELECT * FROM stephanieramos_national_jobs limit 1;
+
+---------------------------
+
+create external table stephanieramos_msa_jobs_csv(
+prim_state string,
+area_code string,
+area_name string,
+occ_code string,
+occ_title string,
+occ_group string,
+tot_emp int,
+emp_prse float,
+jobs_1000 float,
+loc_quotient float,
+h_mean int,
+a_mean int,
+mean_prse float,
+h_pct10 float,
+h_pct25 float,
+h_median float,
+h_pct75 float,
+h_pct90 float,
+a_pct10 int,
+a_pct25 int,
+a_median int,
+a_pct75 int,
+a_pct90 int,
+annual string,
+hourly string,
+year smallint)
+row format serde 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+WITH SERDEPROPERTIES (
+   "separatorChar" = "\,",
+   "quoteChar"     = "\""
+)
+STORED AS TEXTFILE
+  location 's3://stephanieramos-mpcs53014/msa_job_data/';
+
+-- Run a test query to make sure the above worked correctly
+SELECT year, occ_code, occ_title, occ_group, tot_emp, a_mean, a_median FROM stephanieramos_msa_jobs_csv where occ_code = '00-000' limit 10;
+SELECT year, area_name, occ_code, occ_title, occ_group, tot_emp, a_mean, a_median FROM stephanieramos_msa_jobs_csv limit 10;
+
+-- Create an ORC table for job data (Note "stored as ORC" at the end)
+
+create external table stephanieramos_msa_jobs(
+prim_state string,
+area_code string,
+area_name string,
+occ_code string,
+occ_title string,
+occ_group string,
+tot_emp int,
+emp_prse float,
+jobs_1000 float,
+loc_quotient float,
+h_mean int,
+a_mean int,
+mean_prse float,
+h_pct10 float,
+h_pct25 float,
+h_median float,
+h_pct75 float,
+h_pct90 float,
+a_pct10 int,
+a_pct25 int,
+a_median int,
+a_pct75 int,
+a_pct90 int,
+annual string,
+hourly string,
+year smallint)
+stored as orc;
+
+-- Copy the CSV table to the ORC table
+
+insert overwrite table stephanieramos_msa_jobs select * from stephanieramos_msa_jobs_csv
+where occ_code is not null and tot_emp is not null and area_code is not null;
+
+SELECT year, area_name, occ_code, occ_title, occ_group, tot_emp, a_mean, a_median FROM stephanieramos_msa_jobs limit 10;
+
+----Unemployment data----------
+create external table stephanieramos_unemp_csv(
+laus_code string,
+state_code string,
+area_code string,
+area_name string,
+year smallint,
+month smallint,
+labor_force int,
+emp int,
+unemp int,
+unemp_rate float)
+row format serde 'org.apache.hadoop.hive.serde2.OpenCSVSerde'
+WITH SERDEPROPERTIES (
+   "separatorChar" = "\,",
+   "quoteChar"     = "\""
+)
+STORED AS TEXTFILE
+  location 's3://stephanieramos-mpcs53014/unemployment/';
+
+-- Run a test query to make sure the above worked correctly
+SELECT area_code, year, month, labor_force, emp, unemp, unemp_rate from stephanieramos_unemp_csv limit 10;
+
+-- Create an ORC table for job data (Note "stored as ORC" at the end)
+create external table stephanieramos_unemp(
+laus_code string,
+state_code string,
+area_code string,
+area_name string,
+year smallint,
+month smallint,
+labor_force int,
+emp int,
+unemp int,
+unemp_rate float)
+stored as orc;
+
+-- Copy the CSV table to the ORC table
+
+insert overwrite table stephanieramos_unemp select * from stephanieramos_unemp_csv where area_code is not null;
+SELECT area_code, year, month, labor_force, emp, unemp, unemp_rate from stephanieramos_unemp limit 10;
+
+***********************************Batch layer*******************************
+spark-shell –master local[*]
+
+val n_jobs=spark.table("stephanieramos_national_jobs")
+val msa_jobs=spark.table("stephanieramos_msa_jobs")
+val unemp = spark.table("stephanieramos_unemp")
+n_jobs.createOrReplaceTempView("n_jobs")
+msa_jobs.createOrReplaceTempView("msa_jobs")
+unemp.createOrReplaceTempView("unemp")
+
+val jobs = spark.sql("SELECT m.year, m.area_code, m.area_name, m.occ_code, m.occ_title, m.occ_group, m.tot_emp as msa_tot_emp, m.a_mean as msa_a_mean, m.a_median as msa_a_median, n.tot_emp as n_tot_emp, n.a_mean as n_a_mean, n.a_median as n_a_median from msa_jobs as m join (select * from n_jobs where occ_group != 'broad') as n on m.year = n.year and m.occ_code = n.occ_code")
+
+jobs.createOrReplaceTempView("jobs")
+
+val batch = spark.sql("select year, area_code, area_name, occ_code, occ_title, msa_tot_emp, n_tot_emp, msa_a_mean, n_a_mean, lag(msa_a_mean, 1) over (partition by area_code, occ_code order by year asc) as lag_msa_a_mean,  lag(n_a_mean, 1) over (partition by area_code, occ_code order by year asc) as lag_n_a_mean from jobs order by year asc")
+batch.createOrReplaceTempView("batch")
+
+import org.apache.spark.sql.SaveMode
+batch.write.mode(SaveMode.Overwrite).saveAsTable("stephanieramos_jobs")
+
+val join_unemp = spark.sql("select b.year, b.area_code, b.area_name, b.occ_code, b.occ_title, b.msa_tot_emp, b.n_tot_emp, b.msa_a_mean, b.n_a_mean, b.lag_msa_a_mean, b.lag_n_a_mean, u.unemp, u.unemp_rate, u.labor_force from batch as b left join (select * from unemp where month = 12) as u on b.year = u.year and b.area_code = u.area_code")
+join_unemp.createOrReplaceTempView("join_unemp")
+
+//// Machine Learning ////
+import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.ml.feature.Interaction
+import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.feature.Normalizer
+
+
+val ml = spark.sql("select year, area_code, occ_code, unemp / labor_force * 100 as unemp_rate, msa_tot_emp / n_tot_emp * 100 as share_emp, msa_tot_emp / labor_force as share_labor, msa_a_mean from join_unemp where msa_a_mean is not null and unemp is not null")
+ml.createOrReplaceTempView("ml")
+
+val assembler = new VectorAssembler().setHandleInvalid("skip").
+  setInputCols(Array( "unemp_rate","share_emp", "share_labor")).
+  setOutputCol("features").
+  transform(ml)
+
+val normalizer = new Normalizer().
+  setInputCol("features").
+  setOutputCol("normFeatures").
+  setP(2.0).
+  transform(assembler)
+
+val Array(trainingData, testData) = normalizer.randomSplit(Array(0.7, 0.3))
+
+val lr = new LinearRegression().
+  setLabelCol("msa_a_mean").
+  setFeaturesCol("normFeatures").
+  setMaxIter(10).
+  setRegParam(1.0).
+  setElasticNetParam(1.0)
+
+// Fit the model
+val lrModel = lr.fit(trainingData)
+// print the output column and the input column
+val train = lrModel.transform(trainingData)
+train.createOrReplaceTempView("train")
+val test = lrModel.transform(testData)
+test.createOrReplaceTempView("test")
+lrModel.transform(testData).select("features","normFeatures", "msa_a_mean", "prediction").show()
+lrModel.transform(trainingData).show()
+
+val new_ml = spark.sql("select * from train union select * from test")
+new_ml.createOrReplaceTempView("new_ml")
+
+val df = spark.sql("select a.year, a.area_code, a.area_name, a.occ_code, a.occ_title, a.msa_tot_emp, a.n_tot_emp, a.msa_a_mean, a.n_a_mean, a.lag_msa_a_mean, a.lag_n_a_mean, a.unemp, a.unemp_rate, a.labor_force, b.prediction from join_unemp as a left join  new_ml as b on a.year = b.year and a.area_code = b.area_code and a.occ_code=b.occ_code")
+df.createOrReplaceTempView("df")
+
+
+df.write.mode(SaveMode.Overwrite).saveAsTable("stephanieramos_jobs_unemp")
+
+//// TOP 10
+val top10 = spark.sql("select year, occ_code, occ_title, occ_group, tot_emp, a_mean, lag(tot_emp, 1) over (partition by occ_code order by year asc) as lag_tot_emp from n_jobs order by year asc")
+top10.createOrReplaceTempView("top10")
+
+val top10_batch = spark.sql("select year, occ_code, occ_title, a_mean, (tot_emp-lag_tot_emp)/lag_tot_emp as growth, row_number() over (partition by year order by (tot_emp-lag_tot_emp)/lag_tot_emp desc) as rank from top10 where occ_group != 'total' and occ_group != 'major' and occ_group != 'minor' and occ_group != 'broad' order by year desc, growth desc")
+top10_batch.createOrReplaceTempView("top10_batch")
+
+val stephanieramos_top10 = spark.sql("select year, rank, occ_code, occ_title, growth, a_mean from top10_batch where rank < 11 and growth is not null")
+stephanieramos_top10.createOrReplaceTempView("stephanieramos_top10")
+stephanieramos_top10.write.mode(SaveMode.Overwrite).saveAsTable("stephanieramos_top10")
+
+//// WORSE 10
+val worse10_batch = spark.sql("select year, occ_code, occ_title, a_mean, (tot_emp-lag_tot_emp)/lag_tot_emp as growth, row_number() over (partition by year order by (tot_emp-lag_tot_emp)/lag_tot_emp asc) as rank from top10 where occ_group != 'total' and occ_group != 'major' and occ_group != 'minor' and occ_group != 'broad' and lag_tot_emp is not null order by growth asc")
+worse10_batch.createOrReplaceTempView("worse10_batch")
+
+val stephanieramos_worse10 = spark.sql("select year, rank, occ_code, occ_title, growth, a_mean from worse10_batch where rank < 11 and growth is not null order by rank asc")
+stephanieramos_worse10.createOrReplaceTempView("stephanieramos_worse10")
+stephanieramos_worse10.write.mode(SaveMode.Overwrite).saveAsTable("stephanieramos_worse10")
+
+
+//to hbase
+
+create 'stephanieramos_batch', 'stats'
+
+create external table stephanieramos_batch (
+id string,  
+year smallint,
+area_code string,
+area_name string,
+occ_code string, 
+occ_title string,
+msa_tot_emp int,
+n_tot_emp int,
+msa_a_mean int, 
+n_a_mean int, 
+lag_msa_a_mean int, 
+lag_n_a_mean int)
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES ('hbase.columns.mapping' = ':key,stats:year,stats:area_code,stats:area_name,stats:occ_code,stats:occ_title,stats:msa_total_emp,stats:n_tot_emp,stats:msa_a_mean,stats:n_a_mean,stats:lag_msa_a_mean,stats:lag_n_a_mean')
+TBLPROPERTIES ('hbase.table.name' = 'stephanieramos_batch');
+
+insert overwrite table stephanieramos_batch
+select concat(area_code, occ_code, year),
+  year, area_code, area_name,
+  occ_code, occ_title,
+  msa_tot_emp, n_tot_emp,
+  msa_a_mean, n_a_mean,
+  lag_msa_a_mean, lag_n_a_mean
+  from stephanieramos_jobs;
+
+********
+create 'stephanieramos_batch_new', 'stats'
+
+create external table stephanieramos_batch_new (
+id string,  
+year smallint,
+area_code string,
+area_name string,
+occ_code string, 
+occ_title string,
+msa_tot_emp int,
+n_tot_emp int,
+msa_a_mean int, 
+n_a_mean int, 
+lag_msa_a_mean int, 
+lag_n_a_mean int,
+unemp int,
+unemp_rate float,
+labor_force int,
+pred_wage int)
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES ('hbase.columns.mapping' = ':key,stats:year,stats:area_code,stats:area_name,stats:occ_code,stats:occ_title,stats:msa_total_emp,stats:n_tot_emp,stats:msa_a_mean,stats:n_a_mean,stats:lag_msa_a_mean,stats:lag_n_a_mean,stats:unemp,stats:unemp_rate, stats:labor_force, stats:pred_wage')
+TBLPROPERTIES ('hbase.table.name' = 'stephanieramos_batch_new');
+
+insert overwrite table stephanieramos_batch_new
+select concat(area_code, occ_code, year),
+  year, area_code, area_name,
+  occ_code, occ_title,
+  msa_tot_emp, n_tot_emp,
+  msa_a_mean, n_a_mean,
+  lag_msa_a_mean, lag_n_a_mean, unemp, unemp_rate, labor_force, prediction
+  from stephanieramos_jobs_unemp;
+
+***************
+
+create table stephanieramos_occupations (occ_code string, occ_name string)
+  STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+  WITH SERDEPROPERTIES ('hbase.columns.mapping' = ':key,info:occ_name')
+  TBLPROPERTIES ('hbase.table.name' = 'stephanieramos_occupations');
+
+insert overwrite table stephanieramos_occupations
+  select distinct occ_code, occ_title from stephanieramos_batch_new;
+
+create table stephanieramos_metroareas (occ_code string, area_name string)
+  STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+  WITH SERDEPROPERTIES ('hbase.columns.mapping' = ':key,info:area_name')
+  TBLPROPERTIES ('hbase.table.name' = 'stephanieramos_metroareas');
+
+insert overwrite table stephanieramos_metroareas
+  select distinct area_code, area_name from stephanieramos_batch_new;
+
+create 'stephanieramos_top10_batch', 'stats'
+
+create external table stephanieramos_top10_batch (
+id string,
+year smallint,
+rank smallint,
+occ_title string,
+growth float,
+a_mean int)
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES ('hbase.columns.mapping' = ':key,stats:year,stats:rank,stats:occ_title,stats:growth,stats:a_mean')
+TBLPROPERTIES ('hbase.table.name' = 'stephanieramos_top10_batch');
+
+insert overwrite table stephanieramos_top10_batch
+select concat(year, rank - 1, occ_code),
+  year, rank, occ_title, growth, a_mean
+  from stephanieramos_top10;
+
+create 'stephanieramos_worse10_batch', 'stats'
+
+create external table stephanieramos_worse10_batch (
+id string,
+year smallint,
+rank smallint,
+occ_title string,
+growth float,
+a_mean int)
+STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+WITH SERDEPROPERTIES ('hbase.columns.mapping' = ':key,stats:year,stats:rank,stats:occ_title,stats:growth,stats:a_mean')
+TBLPROPERTIES ('hbase.table.name' = 'stephanieramos_worse10_batch');
+
+insert overwrite table stephanieramos_worse10_batch
+select concat(year, rank - 1, occ_code),
+  year, rank, occ_title, growth, a_mean
+  from stephanieramos_worse10;
+
+create table stephanieramos_years (year smallint, year_dup smallint)
+  STORED BY 'org.apache.hadoop.hive.hbase.HBaseStorageHandler'
+  WITH SERDEPROPERTIES ('hbase.columns.mapping' = ':key,info:year_dup')
+  TBLPROPERTIES ('hbase.table.name' = 'stephanieramos_years');
+
+insert overwrite table stephanieramos_years
+  select distinct year, year from stephanieramos_top10_batch order by year desc;
+
+**** Machine Learning ******
+import org.apache.spark.ml.regression.LinearRegression
+import org.apache.spark.ml.feature.Interaction
+import org.apache.spark.ml.feature.VectorAssembler
+import org.apache.spark.ml.feature.Normalizer
+
+
+val ml = spark.sql("select year, area_code, occ_code, unemp / labor_force * 100 as unemp_rate, msa_tot_emp / n_tot_emp * 100 as share_emp, msa_tot_emp / labor_force as share_labor, msa_a_mean from join_unemp where msa_a_mean is not null")
+ml.createOrReplaceTempView("ml")
+
+val assembler = new VectorAssembler().setHandleInvalid("skip").
+  setInputCols(Array( "unemp_rate","share_emp", "share_labor")).
+  setOutputCol("features").
+  transform(ml)
+
+val normalizer = new Normalizer().
+  setInputCol("features").
+  setOutputCol("normFeatures").
+  setP(2.0).
+  transform(assembler)
+
+val Array(trainingData, testData) = normalizer.randomSplit(Array(0.7, 0.3))
+
+val lr = new LinearRegression().
+  setLabelCol("msa_a_mean").
+  setFeaturesCol("normFeatures").
+  setMaxIter(10).
+  setRegParam(1.0).
+  setElasticNetParam(1.0)
+
+// Fit the model
+val lrModel = lr.fit(trainingData)
+// print the output column and the input column
+val train = lrModel.transform(trainingData)
+train.createOrReplaceTempView("train")
+val test = lrModel.transform(testData)
+test.createOrReplaceTempView("test")
+lrModel.transform(testData).select("features","normFeatures", "msa_a_mean", "prediction").show()
+lrModel.transform(trainingData).show()
+
+val new_ml = spark.sql("select * from train union select * from test")
+new_ml.createOrReplaceTempView("new_ml")
+
+
+val df = spark.sql("select a.year, a.area_code, a.area_name, a.occ_code, a.occ_title, a.msa_tot_emp, a.n_tot_emp, a.msa_a_mean, a.lag_n_a_mean, a.unemp, a.unemp_rate, a.labor_force, b.prediction from join_unemp as a left join  new_ml as b on a.year = b.year and a.area_code = b.area_code and a.occ_code=b.occ_code")
+df.createOrReplaceTempView("df")
+
+
+join_unemp.write.mode(SaveMode.Overwrite).saveAsTable("stephanieramos_jobs_unemp")
